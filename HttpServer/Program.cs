@@ -5,20 +5,31 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.IO;
+using System.Windows.Forms;
+using System.Threading;
 
 namespace HttpServer
 {
     class Program
     {
         const string Url = "http://localhost:8080/";
+        const int width = 600, delta = 10;
+        static HttpListener listener;
+        static Functions f;
         static void Main(string[] args)
         {
-            SimpleListenerExample(new string[] { Url });
+            Thread t = new Thread(new ParameterizedThreadStart(SimpleListenerExample));
+            t.Start(new string[] { Url });
+            f = new Functions(width, delta, new KeyEventHandler(ref InputBox_KeyDown));
+            //Application.EnableVisualStyles();
+            //Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(f);
             Console.Read();
         }
 
-        static void SimpleListenerExample(string[] prefixes)
+        static void SimpleListenerExample(object prefixesAsObject)
         {
+            string[] prefixes = (string[])prefixesAsObject;
             //check if the HttpListener is supported
             if (!HttpListener.IsSupported)
             {
@@ -33,7 +44,7 @@ namespace HttpServer
 
 
             // Create a listener.
-            HttpListener listener = new HttpListener();
+            listener = new HttpListener();
 
 
             // Add the prefixes.
@@ -51,7 +62,6 @@ namespace HttpServer
             {
                 HttpLoopContent(ref listener);
             }
-            listener.Stop();
         }
 
         static void HttpLoopContent(ref HttpListener listener)
@@ -180,6 +190,21 @@ namespace HttpServer
             }
             urlCont = urlCont.Remove(urlCont.Length - 1);
             return urlCont;
+        }
+
+        static void InputBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                //do an if statement for any command
+                if (f.inputBox.Text == "exit")
+                {
+                    //listener.Stop();
+                    Application.Exit();
+                }
+                f.inputBox.Clear();
+                f.inputBox.Focus();
+            }
         }
     }
 }
